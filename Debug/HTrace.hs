@@ -75,7 +75,7 @@
 --     10
 -- 55
 -- 
-module Debug.HTrace (htrace) where
+module Debug.HTrace (htrace, htraceId, htraceShow, htraceShowId) where
 
 import Data.IORef
 import System.IO.Unsafe
@@ -88,8 +88,29 @@ level = unsafePerformIO $ newIORef 0
 htrace :: String -> a -> a
 htrace str x = unsafePerformIO $ do
   lvl <- readIORef level
-  putStrLn (replicate (2*lvl) ' ' ++ str)
   writeIORef level (lvl+1)
+  rnf str `seq` putStrLn (replicate (2*lvl) ' ' ++ str)
   let !vx = x
   writeIORef level lvl
   return vx
+
+-- | Like 'htrace' but returns the message instead of a third value.
+--   (This doesn't really make sense if evaluation of the message itself invokes
+--   further htraces: in this case the shown string will come /after/ the indented
+--   sub-traces.)
+htraceId :: String -> String
+htraceId a = htrace a a
+
+-- | Like 'trace', but uses 'show' on the argument to convert it to a 'String'.
+htraceShow :: Show a => a -> b -> b
+htraceShow i = htrace $ show i
+
+-- | Like 'traceShow', but returns the shown value instead of a third value.
+--   As with 'traceShowId`, this should be at the deepest level of recursion
+--   you need tracing in.
+htraceShowId :: Show a => a -> a
+htraceShowId a = htrace (show a) a
+
+
+rnf :: String -> Int
+rnf = sum . map fromEnum
