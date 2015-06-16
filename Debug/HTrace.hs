@@ -75,7 +75,7 @@
 --     10
 -- 55
 -- 
-module Debug.HTrace (htrace, htraceId, htraceShow, htraceShowId) where
+module Debug.HTrace (htrace, htraceId, htraceShow, htraceShowId, htraceM, htraceShowM, htraceIndent) where
 
 import Data.IORef
 import System.IO.Unsafe
@@ -110,6 +110,25 @@ htraceShow i = htrace $ show i
 --   you need tracing in.
 htraceShowId :: Show a => a -> a
 htraceShowId a = htrace (show a) a
+
+-- | Have any `htrace` messages that are issued during evalution of the
+--   argument indented (by two spaces).
+htraceIndent :: a -> a
+htraceIndent x = unsafePerformIO $ do
+  lvl <- readIORef level
+  writeIORef level (lvl+1)
+  let !vx = x
+  writeIORef level lvl
+  return vx
+
+-- | Like 'trace' but returning unit in an arbitrary monad. Allows for convenient
+--   use in do-notation.
+htraceM :: Monad m => String -> m ()
+htraceM str = htrace str $ return ()
+
+-- | Like 'htraceM', but uses 'show' on the argument to convert it to a 'String'.
+htraceShowM :: Monad m => String -> m ()
+htraceShowM = htraceM . show
 
 
 rnf :: String -> Int
