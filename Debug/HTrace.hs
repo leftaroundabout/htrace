@@ -77,7 +77,6 @@
 -- 
 module Debug.HTrace (htrace) where
 
-import Data.List (foldl')
 import Data.IORef
 import System.IO.Unsafe
 
