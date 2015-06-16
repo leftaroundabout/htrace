@@ -80,10 +80,12 @@ module Debug.HTrace (htrace) where
 import Data.IORef
 import System.IO.Unsafe
 
+level :: IORef Int
 level = unsafePerformIO $ newIORef 0
 
 -- | Trace "str" on a separate line, and increase indentation of subsequent
 --   traces while x is being evaluated. 
+htrace :: String -> a -> a
 htrace str x = unsafePerformIO $ do
   lvl <- readIORef level
   putStrLn (replicate (2*lvl) ' ' ++ str)
