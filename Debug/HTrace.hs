@@ -75,7 +75,11 @@
 --     10
 -- 55
 -- 
-module Debug.HTrace (htrace, htraceId, htraceShow, htraceShowId, htraceM, htraceShowM, htraceIndent) where
+module Debug.HTrace (
+          -- * Hierarchical tracing in pure calculations
+             htrace, htraceId, htraceShow, htraceShowId, htraceIndent
+          -- * Hierarchical tracing in monads
+           , htrace_, htraceM, htraceShowM, htraceIndent_) where
 
 import Data.IORef
 import System.IO.Unsafe
@@ -121,10 +125,20 @@ htraceIndent x = unsafePerformIO $ do
   writeIORef level lvl
   return vx
 
--- | Like 'trace' but returning unit in an arbitrary monad. Allows for convenient
+htraceIndent_ :: Functor m => m a -> m a
+htraceIndent_ = fmap htraceIndent
+
+-- | Like 'htrace' but returning unit in an arbitrary monad. Allows for convenient
 --   use in do-notation.
 htraceM :: Monad m => String -> m ()
 htraceM str = htrace str $ return ()
+
+-- | Like 'htrace' but evaluating not just the supplied argument as-is, but
+--   the value contained in the functor. Note: these monadic functions
+--   don't work very reliable. Use a proper monad transformer, e.g. simply
+--   'Control.Monad.Writer.Writer' or the <http://hackage.haskell.org/package/trace trace> package.
+htrace_ :: Functor m => String -> m a -> m a
+htrace_ str = fmap (htrace str)
 
 -- | Like 'htraceM', but uses 'show' on the argument to convert it to a 'String'.
 htraceShowM :: Monad m => String -> m ()
